@@ -1,0 +1,7 @@
+/target
+**/*.rs.bk
+.env
+config/mixer.json
+**/*.mp3
+**/*.wav
+**/*.m4a

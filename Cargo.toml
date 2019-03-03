@@ -1,0 +1,29 @@
+[package]
+name = "discord-bot"
+version = "0.1.0"
+authors = ["Justin Miller <superiorjt@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+log = "0.3"
+env_logger = "0.4"
+config = "0.9"
+serde = { version = "1.0.8", features = ["derive"] }
+kankyo = "~0.1"
+typemap = "0.3"
+hound = "3.4.0"
+
+[dependencies.serenity]
+version = "0.5.11"
+features = [
+    "builder",
+    "cache",
+    "client",
+    "framework",
+    "gateway",
+    "http",
+    "model",
+    "standard_framework",
+    "utils",
+    "voice",
+]
