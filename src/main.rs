@@ -5,7 +5,7 @@ extern crate serenity;
 
 mod audio;
 mod commands;
-use audio::{DiscordAudioBuffer, DiscordAudioPacket, Receiver};
+use audio::DiscordAudioBuffer;
 
 use std::{collections::HashSet, env, sync::Arc, sync::RwLock};
 
@@ -46,7 +46,7 @@ pub static TRACK_LENGTH: usize = 5;
 
 pub static PACKETS_PER_SECOND: usize = 50;
 
-pub static BUFFER_LENGTH: usize = PACKETS_PER_SECOND * 3 * 60;
+pub static BUFFER_LENGTH: usize = PACKETS_PER_SECOND * 1 * 60;
 
 fn main() {
     kankyo::load().expect("Failed to load .env file");

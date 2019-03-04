@@ -45,7 +45,6 @@ impl DiscordAudioBuffer {
                                 p.ssrc,
                                 p.sequence,
                                 data.timestamp,
-                                0,
                                 p.stereo,
                                 vec![0; PACKET_SIZE],
                             ));
@@ -73,7 +72,6 @@ impl DiscordAudioBuffer {
                     data.ssrc,
                     sequence,
                     data.timestamp - ((len - x) as u64 * 20),
-                    0,
                     data.stereo,
                     vec![0; PACKET_SIZE],
                 ));

@@ -54,7 +54,6 @@ impl Track {
                         data.ssrc,
                         front.sequence + (x + 1),
                         front.timestamp + ((x as u64 + 1) * PACKET_INTERVAL),
-                        front.frame + (x as u64 + 1),
                         data.stereo,
                         vec![0; PACKET_SIZE],
                     ));
@@ -73,7 +72,6 @@ impl Track {
                         data.ssrc,
                         data.sequence,
                         front.timestamp + ((x + 1) * PACKET_INTERVAL),
-                        front.frame + (x + 1),
                         data.stereo,
                         vec![0; PACKET_SIZE],
                     ));

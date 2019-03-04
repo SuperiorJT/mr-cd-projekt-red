@@ -14,23 +14,6 @@ use serenity::voice::AudioReceiver;
 use super::buffer::DiscordAudioBuffer;
 use super::DiscordAudioPacket;
 
-struct FrameCounter {
-    start: Instant,
-}
-
-impl FrameCounter {
-    pub fn new() -> Self {
-        Self {
-            start: Instant::now(),
-        }
-    }
-
-    pub fn get_current_frame(&self) -> u64 {
-        let duration = self.start.elapsed();
-        (duration.as_secs() * 1000 + duration.subsec_millis() as u64) / 20
-    }
-}
-
 #[derive(Deserialize)]
 struct UserMixConfig {
     volume: f32,
@@ -48,7 +31,6 @@ impl Default for UserMixConfig {
 
 pub struct Receiver {
     buffer: Arc<RwLock<DiscordAudioBuffer>>,
-    frame_counter: FrameCounter,
     mix_config: HashMap<u64, UserMixConfig>,
 }
 
@@ -62,11 +44,7 @@ impl Receiver {
             Ok(c) => c,
             Err(_) => HashMap::new(),
         };
-        Self {
-            buffer,
-            frame_counter: FrameCounter::new(),
-            mix_config,
-        }
+        Self { buffer, mix_config }
     }
 }
 
@@ -97,7 +75,7 @@ impl AudioReceiver for Receiver {
         &mut self,
         ssrc: u32,
         sequence: u16,
-        timestamp: u32,
+        _timestamp: u32,
         stereo: bool,
         data: &[i16],
     ) {
@@ -108,7 +86,6 @@ impl AudioReceiver for Receiver {
         //     data.len(),
         //     ssrc,
         // );
-        let frame = self.frame_counter.get_current_frame();
         let since_the_epoch = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .expect("Time went backwards");
@@ -129,7 +106,6 @@ impl AudioReceiver for Receiver {
             ssrc,
             sequence,
             timestamp,
-            frame,
             stereo,
             data.to_owned(),
         ));
