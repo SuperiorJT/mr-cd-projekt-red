@@ -14,7 +14,7 @@ typemap = "0.3"
 hound = "3.4.0"
 
 [dependencies.serenity]
-version = "0.5.11"
+version = "0.6.0-rc.1"
 features = [
     "builder",
     "cache",

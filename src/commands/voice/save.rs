@@ -51,7 +51,7 @@ command!(save(ctx, msg, args) {
 
 fn build_data(buffer: &DiscordAudioBuffer) -> Vec<i16> {
     let mut tracks = buffer
-        .data_map
+        .data
         .values()
         .map(|t| t.build_packets())
         .collect::<Vec<Vec<i16>>>();

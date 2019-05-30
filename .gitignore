@@ -5,3 +5,4 @@ config/mixer.json
 **/*.mp3
 **/*.wav
 **/*.m4a
+**/*.log

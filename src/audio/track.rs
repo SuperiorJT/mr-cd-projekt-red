@@ -18,6 +18,13 @@ impl Track {
     }
 
     pub fn new_with_items(volume: f32, items: Vec<DiscordAudioPacket>) -> Self {
+        if items.len() == 0 {
+            return Self {
+                data: VecDeque::new(),
+                prev_packet: None,
+                volume,
+            };
+        }
         let mut data = VecDeque::new();
         for p in items {
             data.push_front(p);
@@ -40,12 +47,12 @@ impl Track {
             }
         };
 
-        if front.sequence > data.sequence {
+        if front.sequence > data.sequence && front.sequence - data.sequence < 10000 {
             error!("Ignoring packet received out of order");
             self.prev_packet = Some(front);
             return;
         }
-        if data.sequence != front.sequence {
+        if data.sequence != front.sequence && data.sequence > front.sequence {
             let dropped_packets = data.sequence - front.sequence - 1;
             if dropped_packets > 0 {
                 debug!("DROPPED PACKETS");
@@ -63,10 +70,12 @@ impl Track {
         }
         if data.timestamp > front.timestamp {
             let silence_time = data.timestamp - front.timestamp;
-            if silence_time > 60 {
+            debug!("Silence Time: {}", silence_time);
+            if silence_time > 40 {
                 let silence_frames =
                     (silence_time as f32 / PACKET_INTERVAL as f32).round() as u64 - 1;
 
+                debug!("Silence Frames: {}", silence_frames);
                 for x in 0..silence_frames {
                     self.data.push_front(DiscordAudioPacket::new(
                         data.ssrc,

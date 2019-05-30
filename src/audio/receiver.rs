@@ -32,6 +32,7 @@ impl Default for UserMixConfig {
 pub struct Receiver {
     buffer: Arc<RwLock<DiscordAudioBuffer>>,
     mix_config: HashMap<u64, UserMixConfig>,
+    instant: Instant
 }
 
 impl Receiver {
@@ -44,20 +45,12 @@ impl Receiver {
             Ok(c) => c,
             Err(_) => HashMap::new(),
         };
-        Self { buffer, mix_config }
+        Self { buffer, mix_config, instant: Instant::now() }
     }
 }
 
 impl AudioReceiver for Receiver {
     fn speaking_update(&mut self, ssrc: u32, user_id: u64, speaking: bool) {
-        let user = match UserId::from(user_id).to_user() {
-            Ok(user) => user,
-            Err(why) => {
-                error!("Cannot get user defined in speaking update: {:?}", why);
-
-                return;
-            }
-        };
         let mut buffer = match self.buffer.write() {
             Ok(buffer) => buffer,
             Err(why) => {
@@ -68,7 +61,8 @@ impl AudioReceiver for Receiver {
         };
         let volume = self.mix_config.entry(user_id).or_default().volume;
         buffer.update_track_mix(ssrc, volume);
-        info!("Speaking Update: {}, {}, {}", user.name, ssrc, speaking);
+
+        info!("Speaking Update: {}, {}, {}", user_id, ssrc, speaking);
     }
 
     fn voice_packet(
@@ -78,6 +72,7 @@ impl AudioReceiver for Receiver {
         _timestamp: u32,
         stereo: bool,
         data: &[i16],
+        _compressed_size: usize
     ) {
         // info!("Audio packet's first 5 bytes: {:?}", data.get(..5));
         // info!(
@@ -86,29 +81,30 @@ impl AudioReceiver for Receiver {
         //     data.len(),
         //     ssrc,
         // );
-        let since_the_epoch = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("Time went backwards");
-        let timestamp = since_the_epoch.as_secs() * 1000 + since_the_epoch.subsec_millis() as u64;
+        // let since_the_epoch = SystemTime::now()
+        //     .duration_since(UNIX_EPOCH)
+        //     .expect("Time went backwards");
+        let since_start = self.instant.elapsed().as_secs() * 1000 + self.instant.elapsed().subsec_millis() as u64;
+        // let timestamp = since_the_epoch.as_secs() * 1000 + since_the_epoch.subsec_millis() as u64;
         info!(
             "Time: {}, Sequence: {}, ssrc: {}",
-            timestamp, sequence, ssrc
+            since_start, sequence, ssrc
         );
-        let mut buffer = match self.buffer.write() {
-            Ok(buffer) => buffer,
-            Err(why) => {
-                error!("Could not get audio buffer lock: {:?}", why);
+        // let mut buffer = match self.buffer.write() {
+        //     Ok(buffer) => buffer,
+        //     Err(why) => {
+        //         error!("Could not get audio buffer lock: {:?}", why);
 
-                return;
-            }
-        };
-        buffer.insert_item(DiscordAudioPacket::new(
-            ssrc,
-            sequence,
-            timestamp,
-            stereo,
-            data.to_owned(),
-        ));
+        //         return;
+        //     }
+        // };
+        // buffer.insert_item(DiscordAudioPacket::new(
+        //     ssrc,
+        //     sequence,
+        //     timestamp,
+        //     stereo,
+        //     data.to_owned(),
+        // ));
         // info!("Data Size: {}, Buffer Length: {}, Buffer Cap: {}", data.len(), buffer.size(), buffer.capacity());
     }
 }
