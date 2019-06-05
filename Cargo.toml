@@ -12,6 +12,12 @@ serde = { version = "1.0.8", features = ["derive"] }
 kankyo = "~0.1"
 typemap = "0.3"
 hound = "3.4.0"
+r2d2 = "0.8.4"
+r2d2_sqlite = "0.10.0"
+
+[dependencies.rusqlite]
+version = "0.18.0"
+features = ["bundled"]
 
 [dependencies.serenity]
 version = "0.6.0-rc.1"

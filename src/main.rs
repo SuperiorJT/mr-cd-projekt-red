@@ -1,9 +1,18 @@
 #[macro_use]
 extern crate log;
 
-mod audio;
-mod commands;
+pub mod audio;
+pub mod commands;
+pub mod db;
+pub mod model;
+pub mod error;
+
+pub use error::Error;
+
+pub type Result<T> = std::result::Result<T, error::Error>;
+
 use audio::DiscordAudioBuffer;
+use db::Database;
 
 use std::{collections::HashSet, env, sync::Arc, sync::RwLock};
 
@@ -14,7 +23,7 @@ use serenity::{
     prelude::*,
 };
 
-use commands::{about::*, admin::shadow_realm::*, ping::*, quit::*};
+use commands::{about::*, admin::shadow_realm::*, ping::*, quit::*, db_test::*};
 
 use typemap::Key;
 
@@ -28,6 +37,12 @@ pub struct BufferType;
 
 impl Key for BufferType {
     type Value = Arc<RwLock<DiscordAudioBuffer>>;
+}
+
+pub struct DBType;
+
+impl Key for DBType {
+    type Value = Arc<RwLock<Database>>;
 }
 
 struct Handler;
@@ -49,7 +64,7 @@ pub static BUFFER_LENGTH: usize = PACKETS_PER_SECOND * 1 * 60;
 group!({
     name: "general",
     options: {},
-    commands: [about, ping, quit]
+    commands: [about, ping, quit, register]
 });
 
 group!({
@@ -82,6 +97,8 @@ fn main() {
         Err(why) => panic!("Couldn't get application info: {:?}", why),
     };
 
+    let db = Arc::new(RwLock::new(Database::open().expect("Couldn't open database")));
+
     let buffer_map = Arc::new(RwLock::new(DiscordAudioBuffer::new(BUFFER_LENGTH)));
 
     // Obtain a lock to the data owned by the client, and insert the client's
@@ -89,6 +106,7 @@ fn main() {
     // event handlers and framework commands.
     {
         let mut data = client.data.write();
+        data.insert::<DBType>(Arc::clone(&db));
         data.insert::<VoiceManager>(Arc::clone(&client.voice_manager));
         data.insert::<BufferType>(Arc::clone(&buffer_map));
     }
