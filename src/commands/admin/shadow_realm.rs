@@ -206,13 +206,19 @@ fn unassign_banishment(
     member: &mut Member,
     channel_id: ChannelId,
 ) -> serenity::Result<()> {
-    guild.edit_member(&ctx.http, user.id, |edit_member| {
-        member.roles = member
-            .roles
-            .drain(..)
-            .filter(|role_id| *role_id != BANISHED_ROLE_ID)
-            .collect::<Vec<RoleId>>();
+    member.roles = member
+        .roles
+        .drain(..)
+        .filter(|role_id| *role_id != BANISHED_ROLE_ID)
+        .collect::<Vec<RoleId>>();
+    let res = guild.edit_member(&ctx.http, user.id, |edit_member| {
         edit_member.voice_channel(channel_id);
+        edit_member.roles(&member.roles)
+    });
+    if res.is_ok() {
+        return res;
+    }
+    guild.edit_member(&ctx.http, user.id, |edit_member| {
         edit_member.roles(&member.roles)
     })
 }
