@@ -23,6 +23,12 @@ pub fn register(ctx: &mut Context, msg: &Message) -> CommandResult {
         .read()
         .expect("Expected Database lock to not be poisoned");
 
+    // Check if user is already registered
+    if let Ok(_) = User::db_read_by_id(&db, msg.author.id) {
+        let _ = msg.reply(ctx, &format!("You are already registered."));
+        return Ok(());
+    }
+
     let user = User::new(msg.author.id);
 
     user.db_create(&db).expect("Failed to create user");
