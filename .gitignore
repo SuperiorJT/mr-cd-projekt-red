@@ -6,3 +6,5 @@ config/mixer.json
 **/*.wav
 **/*.m4a
 **/*.log
+.vscode
+run.sh

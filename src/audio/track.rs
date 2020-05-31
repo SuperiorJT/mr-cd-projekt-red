@@ -60,7 +60,7 @@ impl Track {
                     self.data.push_front(DiscordAudioPacket::new(
                         data.ssrc,
                         front.sequence + (x + 1),
-                        front.timestamp + ((x as u64 + 1) * PACKET_INTERVAL),
+                        front.timestamp + ((u64::from(x) + 1) * PACKET_INTERVAL),
                         data.stereo,
                         vec![0; PACKET_SIZE],
                     ));
@@ -114,7 +114,7 @@ impl Track {
                 p.data
                     .clone()
                     .iter_mut()
-                    .map(|data| (*data as f32 * self.volume) as i16)
+                    .map(|data| (f32::from(*data) * self.volume) as i16)
                     .collect::<Vec<i16>>()
             })
             .flatten()

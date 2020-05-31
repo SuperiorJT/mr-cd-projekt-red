@@ -7,9 +7,9 @@ use serenity::prelude::*;
 #[command]
 #[description = "Registers the user to the database"]
 #[usage("~register")]
-pub fn register(ctx: &mut Context, msg: &Message) -> CommandResult {
+pub fn register(ctx: &Context, msg: &Message) -> CommandResult {
     let _ = msg.reply(
-        ctx,
+        &ctx,
         &format!("Attempting to register user {}", msg.author.name),
     );
 

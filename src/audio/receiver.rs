@@ -32,7 +32,7 @@ impl Default for UserMixConfig {
 pub struct Receiver {
     buffer: Arc<RwLock<DiscordAudioBuffer>>,
     mix_config: HashMap<u64, UserMixConfig>,
-    instant: Instant
+    instant: Instant,
 }
 
 impl Receiver {
@@ -45,7 +45,11 @@ impl Receiver {
             Ok(c) => c,
             Err(_) => HashMap::new(),
         };
-        Self { buffer, mix_config, instant: Instant::now() }
+        Self {
+            buffer,
+            mix_config,
+            instant: Instant::now(),
+        }
     }
 }
 
@@ -72,24 +76,26 @@ impl AudioReceiver for Receiver {
         _timestamp: u32,
         stereo: bool,
         data: &[i16],
-        _compressed_size: usize
+        _compressed_size: usize,
     ) {
         // info!("Audio packet's first 5 bytes: {:?}", data.get(..5));
-        // info!(
-        //     "Audio packet sequence {:05} has {:04} bytes, SSRC {}",
-        //     sequence,
-        //     data.len(),
-        //     ssrc,
-        // );
+        info!(
+            "Audio packet sequence {:05} has {:04} bytes, SSRC {}, is_stereo: {}",
+            sequence,
+            data.len(),
+            ssrc,
+            stereo
+        );
         // let since_the_epoch = SystemTime::now()
         //     .duration_since(UNIX_EPOCH)
         //     .expect("Time went backwards");
-        let since_start = self.instant.elapsed().as_secs() * 1000 + self.instant.elapsed().subsec_millis() as u64;
+        // let since_start = self.instant.elapsed().as_secs()
+        //     * u64::from(1000 + self.instant.elapsed().subsec_millis());
         // let timestamp = since_the_epoch.as_secs() * 1000 + since_the_epoch.subsec_millis() as u64;
-        info!(
-            "Time: {}, Sequence: {}, ssrc: {}",
-            since_start, sequence, ssrc
-        );
+        // info!(
+        //     "Time: {}, Sequence: {}, ssrc: {}",
+        //     since_start, sequence, ssrc
+        // );
         // let mut buffer = match self.buffer.write() {
         //     Ok(buffer) => buffer,
         //     Err(why) => {
@@ -105,6 +111,11 @@ impl AudioReceiver for Receiver {
         //     stereo,
         //     data.to_owned(),
         // ));
-        // info!("Data Size: {}, Buffer Length: {}, Buffer Cap: {}", data.len(), buffer.size(), buffer.capacity());
+        // info!(
+        //     "Data Size: {}, Buffer Length: {}, Buffer Cap: {}",
+        //     data.len(),
+        //     buffer.size(),
+        //     buffer.capacity()
+        // );
     }
 }

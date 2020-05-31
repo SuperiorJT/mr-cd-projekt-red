@@ -5,22 +5,23 @@ authors = ["Justin Miller <superiorjt@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-log = "0.3"
-env_logger = "0.4"
-config = "0.9"
-serde = { version = "1.0.8", features = ["derive"] }
-kankyo = "~0.1"
+log = "0.4.8"
+env_logger = "0.7.1"
+config = "0.10.1"
+serde = { version = "1.0.110", features = ["derive"] }
+kankyo = "~0.3"
 typemap = "0.3"
 hound = "3.4.0"
-r2d2 = "0.8.4"
-r2d2_sqlite = "0.10.0"
+r2d2 = "0.8.8"
+r2d2_sqlite = "0.16.0"
 
 [dependencies.rusqlite]
-version = "0.18.0"
+version = "0.23.1"
 features = ["bundled"]
 
 [dependencies.serenity]
-version = "0.6.0-rc.1"
+git = "https://github.com/serenity-rs/serenity.git"
+branch = "next"
 features = [
     "builder",
     "cache",

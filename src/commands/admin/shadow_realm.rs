@@ -19,11 +19,11 @@ enum CommandError {
 
 #[command]
 #[description = "Sends another user to the shadow realm for punishment."]
-#[usage("~sr @Victim @AnotherVictim ...")]
+#[usage("@Victim @AnotherVictim ...")]
 #[aliases("sr", "shadow")]
 #[min_args(1)]
 #[owners_only]
-pub fn shadow_realm(ctx: &mut Context, msg: &Message, args: Args) -> CommandResult {
+pub fn shadow_realm(ctx: &Context, msg: &Message, args: Args) -> CommandResult {
     if args.len() == 0 || msg.mentions.len() == 0 {
         send_msg(
             ctx,
@@ -50,7 +50,7 @@ pub fn shadow_realm(ctx: &mut Context, msg: &Message, args: Args) -> CommandResu
             let mut members = user_states
                 .drain(..)
                 .map(|(user, channel_id)| {
-                    if let Ok(member) = guild.member(ctx, user.id) {
+                    if let Ok(member) = guild.member(&ctx, user.id) {
                         return Some((user, member, channel_id));
                     }
                     None
@@ -107,7 +107,7 @@ pub fn shadow_realm(ctx: &mut Context, msg: &Message, args: Args) -> CommandResu
     Ok(())
 }
 
-fn send_msg(ctx: &mut Context, msg: &Message, content: impl std::fmt::Display) {
+fn send_msg(ctx: &Context, msg: &Message, content: impl std::fmt::Display) {
     if let Err(why) = msg.channel_id.say(ctx, content) {
         error!("Error sending message: {:?}", why);
     }
@@ -133,7 +133,7 @@ fn format_usernames(msg: &Message) -> String {
 }
 
 fn get_voice_states(
-    ctx: &mut Context,
+    ctx: &Context,
     msg: &Message,
     users: &Vec<User>,
 ) -> Result<Vec<(User, ChannelId)>, CommandError> {
@@ -178,7 +178,7 @@ fn get_user_voice_channel(
 }
 
 fn move_user_to_channel(
-    ctx: &mut Context,
+    ctx: &Context,
     guild: &Guild,
     user: &User,
     channel_id: ChannelId,
@@ -187,7 +187,7 @@ fn move_user_to_channel(
 }
 
 fn assign_banishment(
-    ctx: &mut Context,
+    ctx: &Context,
     guild: &Guild,
     user: &User,
     member: &mut Member,
@@ -200,7 +200,7 @@ fn assign_banishment(
 }
 
 fn unassign_banishment(
-    ctx: &mut Context,
+    ctx: &Context,
     guild: &Guild,
     user: &User,
     member: &mut Member,

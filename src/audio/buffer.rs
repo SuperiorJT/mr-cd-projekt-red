@@ -68,7 +68,7 @@ impl DiscordAudioBuffer {
                 buffer.push(DiscordAudioPacket::new(
                     data.ssrc,
                     sequence,
-                    data.timestamp - ((len - x) as u64 * 20),
+                    data.timestamp - (u64::from(len - x) * 20),
                     data.stereo,
                     vec![0; PACKET_SIZE],
                 ));

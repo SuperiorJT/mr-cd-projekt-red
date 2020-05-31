@@ -12,7 +12,7 @@ command!(save(ctx, msg, args) {
         },
         Err(_) => {
             if let Err(why) = msg.channel_id.say("Must provide a valid filename") {
-                error!("Error sending message: {:?}", why);  
+                error!("Error sending message: {:?}", why);
             }
 
             return Ok(());
@@ -23,7 +23,7 @@ command!(save(ctx, msg, args) {
         Some(channel) => channel.read().guild_id,
         None => {
             if let Err(why) = msg.channel_id.say("Error finding channel info") {
-                error!("Error sending message: {:?}", why);  
+                error!("Error sending message: {:?}", why);
             }
 
             return Ok(());
@@ -111,9 +111,9 @@ fn write_to_file(audio_data: Vec<i16>, file_name: String) {
 fn normalize_sample(a: i16) -> f32 {
     if a >= 0 {
         // debug!("{} {}", a, (a as f32 / 32767.0_f32));
-        return a as f32 / 32767.0_f32;
+        return f32::from(a) / 32767.0_f32;
     }
-    a as f32 / 32768.0_f32
+    f32::from(a) / 32768.0_f32
 }
 
 fn normal_to_i16(a: f32) -> i16 {

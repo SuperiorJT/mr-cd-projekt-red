@@ -1,55 +1,80 @@
 use super::super::super::VoiceManager;
 
-use serenity::{voice, CACHE};
+use crate::commands::helpers::check_msg;
+use serenity::{
+    framework::standard::{macros::command, Args, CommandResult},
+    model::channel::Message,
+    prelude::Context,
+    voice,
+};
 
-command!(play(ctx, msg, args) {
+#[command]
+#[description = "Plays the requested audio clip if available"]
+#[usage("[filename].[ext]")]
+#[aliases("p", "play")]
+#[min_args(1)]
+pub fn play(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
     let name = match args.single::<String>() {
         Ok(name) => name,
         Err(_) => {
-            if let Err(why) = msg.channel_id.say("Must provide a valid filename") {
-                error!("Error sending message: {:?}", why);  
-            }
+            check_msg(
+                msg.channel_id
+                    .say(&ctx.http, "Must provide a valid filename"),
+            );
 
             return Ok(());
-        },
+        }
     };
 
-    let guild_id = match CACHE.read().guild_channel(msg.channel_id) {
+    let guild_id = match ctx.cache.read().guild_channel(msg.channel_id) {
         Some(channel) => channel.read().guild_id,
         None => {
-            if let Err(why) = msg.channel_id.say("Error finding channel info") {
-                error!("Error sending message: {:?}", why);  
-            }
+            check_msg(msg.channel_id.say(&ctx.http, "Error finding channel info"));
 
             return Ok(());
-        },
+        }
     };
 
-    let mut manager_lock = ctx.data.lock().get::<VoiceManager>().cloned().expect("Expected VoiceManager in ShareMap.");
+    let manager_lock = ctx
+        .data
+        .read()
+        .get::<VoiceManager>()
+        .cloned()
+        .expect("Expected VoiceManager in ShareMap.");
     let mut manager = manager_lock.lock();
 
-    if let Some(handler) = manager.get_mut(guild_id) {
-        let source = match voice::ffmpeg(&name) {
-            Ok(source) => source,
-            Err(why) => {
-                println!("Err starting source: {:?}", why);
+    let handler = match manager.get_mut(guild_id) {
+        Some(handler) => handler,
+        None => {
+            check_msg(
+                msg.channel_id
+                    .say(&ctx.http, "Not in a voice channel to play in"),
+            );
 
-                if let Err(why) = msg.channel_id.say("Error sourcing ffmpeg") {
-                    error!("Error sending message: {:?}", why);
-                }
-
-                return Ok(());
-            },
-        };
-
-        handler.play(source);
-
-        if let Err(why) = msg.channel_id.say("Playing audio") {
-            error!("Error sending message: {:?}", why);
+            return Ok(());
         }
-    } else {
-        if let Err(why) = msg.channel_id.say("Not in a voice channel to play in") {
-            error!("Error sending message: {:?}", why);
+    };
+
+    let source = match voice::ffmpeg(&name) {
+        Ok(source) => source,
+        Err(why) => {
+            error!("{}", why);
+            for entry in
+                std::fs::read_dir(std::env::current_dir().unwrap()).expect("Unable to list")
+            {
+                let entry = entry.expect("unable to get entry");
+                error!("{}", entry.path().display());
+            }
+
+            check_msg(msg.channel_id.say(&ctx.http, "Error sourcing ffmpeg"));
+
+            return Ok(());
         }
-    }
-});
+    };
+
+    handler.play(source);
+
+    check_msg(msg.channel_id.say(&ctx.http, "Playing audio"));
+
+    Ok(())
+}
