@@ -1,20 +1,19 @@
-use crate::{audio::Receiver, commands::helpers::check_msg, BufferType, VoiceManager};
+use crate::{commands::helpers::check_msg, VoiceManager};
 use serenity::{
     framework::standard::{macros::command, CommandResult},
     model::{channel::Message, misc::Mentionable},
     prelude::Context,
 };
-use std::sync::Arc;
 
 #[command]
 #[description = "Joins the requester's voice channel"]
-pub fn join(ctx: &Context, msg: &Message) -> CommandResult {
-    let guild = match msg.guild(&ctx.cache) {
+pub async fn join(ctx: &Context, msg: &Message) -> CommandResult {
+    let guild = match msg.guild(&ctx.cache).await {
         Some(guild) => guild,
         None => {
             check_msg(
                 msg.channel_id
-                    .say(&ctx.http, "Groups and DMs not supported"),
+                    .say(&ctx.http, "Groups and DMs not supported").await,
             );
 
             return Ok(());
@@ -22,7 +21,6 @@ pub fn join(ctx: &Context, msg: &Message) -> CommandResult {
     };
 
     let channel_id = guild
-        .read()
         .voice_states
         .get(&msg.author.id)
         .and_then(|voice_states| voice_states.channel_id);
@@ -30,42 +28,43 @@ pub fn join(ctx: &Context, msg: &Message) -> CommandResult {
     let connect_to = match channel_id {
         Some(channel) => channel,
         None => {
-            check_msg(msg.reply(&ctx, "Not in a voice channel"));
+            check_msg(msg.reply(&ctx, "Not in a voice channel").await);
 
             return Ok(());
         }
     };
 
-    let guild_id = guild.read().id;
+    let guild_id = guild.id;
 
-    let mut manager_lock = ctx
+    let manager_lock = ctx
         .data
         .read()
+        .await
         .get::<VoiceManager>()
         .cloned()
         .expect("Expected VoiceManager in ShareMap.");
-    let mut manager = manager_lock.lock();
-    let mut buffer_lock = ctx
-        .data
-        .read()
-        .get::<BufferType>()
-        .cloned()
-        .expect("Expected BufferType in ShareMap.");
+    let mut manager = manager_lock.lock().await;
+    // let mut buffer_lock = ctx
+    //     .data
+    //     .read()
+    //     .get::<BufferType>()
+    //     .cloned()
+    //     .expect("Expected BufferType in ShareMap.");
 
-    let handler = match manager.join(guild_id, connect_to) {
+    let _handler = match manager.join(guild_id, connect_to) {
         Some(handler) => handler,
         None => {
-            check_msg(msg.channel_id.say(&ctx.http, "Error joining the channel"));
+            check_msg(msg.channel_id.say(&ctx.http, "Error joining the channel").await);
 
             return Ok(());
         }
     };
 
-    handler.listen(Some(Box::new(Receiver::new(Arc::clone(&buffer_lock)))));
+    // handler.listen(Some(Box::new(Receiver::new(Arc::clone(&buffer_lock)))));
 
     check_msg(
         msg.channel_id
-            .say(&ctx.http, &format!("Joined {}", connect_to.mention())),
+            .say(&ctx.http, &format!("Joined {}", connect_to.mention())).await,
     );
 
     Ok(())

@@ -8,7 +8,7 @@ use serenity::{
 use std::collections::HashSet;
 
 #[help]
-pub fn cdpr_help(
+pub async fn cdpr_help(
     context: &Context,
     msg: &Message,
     args: Args,
@@ -16,5 +16,6 @@ pub fn cdpr_help(
     groups: &[&'static CommandGroup],
     owners: HashSet<UserId>,
 ) -> CommandResult {
-    help_commands::with_embeds(context, msg, args, help_options, groups, owners)
+    let _ = help_commands::with_embeds(context, msg, args, help_options, groups, owners).await;
+    Ok(())
 }

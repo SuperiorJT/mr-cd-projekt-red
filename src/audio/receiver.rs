@@ -64,7 +64,7 @@ impl AudioReceiver for Receiver {
             }
         };
         let volume = self.mix_config.entry(user_id).or_default().volume;
-        buffer.update_track_mix(ssrc, volume);
+        buffer.update_track_mix(ssrc, (volume * f32::from(u8::max_value())) as u8);
 
         info!("Speaking Update: {}, {}, {}", user_id, ssrc, speaking);
     }
@@ -78,14 +78,13 @@ impl AudioReceiver for Receiver {
         data: &[i16],
         _compressed_size: usize,
     ) {
-        // info!("Audio packet's first 5 bytes: {:?}", data.get(..5));
-        info!(
-            "Audio packet sequence {:05} has {:04} bytes, SSRC {}, is_stereo: {}",
-            sequence,
-            data.len(),
-            ssrc,
-            stereo
-        );
+        // info!(
+        //     "Audio packet sequence {:05} has {:04} bytes, SSRC {}, is_stereo: {}",
+        //     sequence,
+        //     data.len() * 2,
+        //     ssrc,
+        //     stereo
+        // );
         // let since_the_epoch = SystemTime::now()
         //     .duration_since(UNIX_EPOCH)
         //     .expect("Time went backwards");

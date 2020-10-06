@@ -8,3 +8,7 @@ config/mixer.json
 **/*.log
 .vscode
 run.sh
+
+web/client/node_modules
+web/client/public
+web/target

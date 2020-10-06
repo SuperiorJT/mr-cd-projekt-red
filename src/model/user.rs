@@ -1,6 +1,6 @@
 
 use crate::db::Database;
-use crate::{Error, Result};
+use crate::{Result};
 use rusqlite::{NO_PARAMS};
 use serenity::model::prelude::UserId;
 #[derive(Debug)]

@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate log;
 
-pub mod audio;
+// pub mod audio;
 pub mod commands;
 pub mod db;
 pub mod error;
@@ -11,15 +11,19 @@ pub use error::Error;
 
 pub type Result<T> = std::result::Result<T, error::Error>;
 
-use audio::DiscordAudioBuffer;
+// use audio::DiscordAudioBuffer;
 use db::Database;
 
 use std::{collections::HashSet, env, sync::Arc, sync::RwLock};
 
 use serenity::{
+    async_trait,
+    http::Http,
     client::{
-        bridge::{gateway::ShardManager, voice::ClientVoiceManager},
-        Client, Context, EventHandler,
+        Client,
+        Context,
+        EventHandler,
+        bridge::{gateway::ShardManager, voice::ClientVoiceManager}
     },
     framework::{standard::macros::group, StandardFramework},
     model::gateway::Ready,
@@ -42,11 +46,11 @@ impl TypeMapKey for VoiceManager {
     type Value = Arc<Mutex<ClientVoiceManager>>;
 }
 
-pub struct BufferType;
+// pub struct BufferType;
 
-impl TypeMapKey for BufferType {
-    type Value = Arc<RwLock<DiscordAudioBuffer>>;
-}
+// impl TypeMapKey for BufferType {
+//     type Value = Arc<RwLock<DiscordAudioBuffer>>;
+// }
 
 pub struct DBType;
 
@@ -62,9 +66,10 @@ impl TypeMapKey for ShardManagerContainer {
 
 struct Handler;
 
+#[async_trait]
 impl EventHandler for Handler {
-    fn ready(&self, _ctx: Context, ready: Ready) {
-        info!("Connected as {}", ready.user.name);
+    async fn ready(&self, _: Context, ready: Ready) {
+        println!("{} is connected!", ready.user.name);
     }
 }
 
@@ -88,15 +93,16 @@ struct Voice;
 #[commands(shadow_realm)]
 struct Admin;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     kankyo::load(false).expect("Failed to load .env file");
     env_logger::init();
 
     let token = env::var("DISCORD_TOKEN").expect("Expected a token in the environment");
 
-    let mut client = Client::new(&token, Handler).expect("Error creating client");
+    let http = Http::new_with_token(&token);
 
-    let owners = match client.cache_and_http.http.get_current_application_info() {
+    let owners = match http.get_current_application_info().await {
         Ok(info) => {
             let mut set = HashSet::new();
             set.insert(info.owner.id);
@@ -110,29 +116,34 @@ fn main() {
         Database::open().expect("Couldn't open database"),
     ));
 
-    let buffer_map = Arc::new(RwLock::new(DiscordAudioBuffer::new(BUFFER_LENGTH)));
+    let framework = 
+        StandardFramework::new()
+            .configure(|c| c.owners(owners).prefix("~"))
+            .group(&GENERAL_GROUP)
+            // .group(&VOICE_GROUP)
+            .group(&ADMIN_GROUP)
+            .help(&CDPR_HELP);
+
+    let mut client = Client::new(&token)
+        .framework(framework)
+        .event_handler(Handler)
+        .await
+        .expect("Err creating client");
+
+    // let buffer_map = Arc::new(RwLock::new(DiscordAudioBuffer::new(BUFFER_LENGTH)));
 
     // Obtain a lock to the data owned by the client, and insert the client's
     // voice manager into it. This allows the voice manager to be accessible by
     // event handlers and framework commands.
     {
-        let mut data = client.data.write();
+        let mut data = client.data.write().await;
         data.insert::<DBType>(Arc::clone(&db));
-        data.insert::<VoiceManager>(Arc::clone(&client.voice_manager));
-        data.insert::<BufferType>(Arc::clone(&buffer_map));
-        data.insert::<ShardManagerContainer>(Arc::clone(&client.shard_manager));
+        data.insert::<VoiceManager>(client.voice_manager.clone());
+        // data.insert::<BufferType>(Arc::clone(&buffer_map));
+        data.insert::<ShardManagerContainer>(client.shard_manager.clone());
     }
 
-    client.with_framework(
-        StandardFramework::new()
-            .configure(|c| c.owners(owners).prefix("~"))
-            .group(&GENERAL_GROUP)
-            .group(&VOICE_GROUP)
-            .group(&ADMIN_GROUP)
-            .help(&CDPR_HELP),
-    );
-
-    if let Err(err) = client.start() {
+    if let Err(err) = client.start().await {
         println!("An Error ocurred while running the client: {:?}", err);
     }
 }

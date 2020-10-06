@@ -7,11 +7,11 @@ use serenity::prelude::*;
 #[description = "Shuts down the bot"]
 #[usage("~quit")]
 #[owners_only]
-pub fn quit(ctx: &Context, msg: &Message) -> CommandResult {
-    let data = ctx.data.read();
+pub async fn quit(ctx: &Context, msg: &Message) -> CommandResult {
+    let data = ctx.data.read().await;
 
     if let Some(manager) = data.get::<ShardManagerContainer>() {
-        manager.lock().shutdown_all();
+        manager.lock().await.shutdown_all().await;
     } else {
         let _ = msg.reply(&ctx, "There was a problem getting the shard manager");
 

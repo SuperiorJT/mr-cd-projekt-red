@@ -7,7 +7,7 @@ use serenity::prelude::*;
 #[command]
 #[description = "Registers the user to the database"]
 #[usage("~register")]
-pub fn register(ctx: &Context, msg: &Message) -> CommandResult {
+pub async fn register(ctx: &Context, msg: &Message) -> CommandResult {
     let _ = msg.reply(
         &ctx,
         &format!("Attempting to register user {}", msg.author.name),
@@ -16,6 +16,7 @@ pub fn register(ctx: &Context, msg: &Message) -> CommandResult {
     let db_lock = ctx
         .data
         .read()
+        .await
         .get::<DBType>()
         .cloned()
         .expect("Expected Database in ShareMap");

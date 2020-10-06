@@ -5,11 +5,11 @@ use std::collections::VecDeque;
 pub struct Track {
     data: VecDeque<DiscordAudioPacket>,
     pub prev_packet: Option<DiscordAudioPacket>,
-    pub volume: f32, // 0 to 1 inclusive
+    pub volume: u8
 }
 
 impl Track {
-    pub fn new(volume: f32) -> Self {
+    pub fn new(volume: u8) -> Self {
         Self {
             data: VecDeque::new(),
             prev_packet: None,
@@ -17,7 +17,7 @@ impl Track {
         }
     }
 
-    pub fn new_with_items(volume: f32, items: Vec<DiscordAudioPacket>) -> Self {
+    pub fn new_with_items(volume: u8, items: Vec<DiscordAudioPacket>) -> Self {
         if items.len() == 0 {
             return Self {
                 data: VecDeque::new(),
@@ -60,9 +60,9 @@ impl Track {
                     self.data.push_front(DiscordAudioPacket::new(
                         data.ssrc,
                         front.sequence + (x + 1),
-                        front.timestamp + ((u64::from(x) + 1) * PACKET_INTERVAL),
+                        front.timestamp + ((u32::from(x) + 1) * u32::from(PACKET_INTERVAL)),
                         data.stereo,
-                        vec![0; PACKET_SIZE],
+                        vec![0; usize::from(PACKET_SIZE)],
                     ));
                 }
                 front = self.data.front().unwrap().clone();
@@ -73,16 +73,16 @@ impl Track {
             debug!("Silence Time: {}", silence_time);
             if silence_time > 40 {
                 let silence_frames =
-                    (silence_time as f32 / PACKET_INTERVAL as f32).round() as u64 - 1;
+                    (silence_time as f32 / PACKET_INTERVAL as f32).round() as u32 - 1;
 
                 debug!("Silence Frames: {}", silence_frames);
                 for x in 0..silence_frames {
                     self.data.push_front(DiscordAudioPacket::new(
                         data.ssrc,
                         data.sequence,
-                        front.timestamp + ((x + 1) * PACKET_INTERVAL),
+                        front.timestamp + ((x + 1) * u32::from(PACKET_INTERVAL)),
                         data.stereo,
-                        vec![0; PACKET_SIZE],
+                        vec![0; usize::from(PACKET_SIZE)],
                     ));
                 }
             }
@@ -114,7 +114,7 @@ impl Track {
                 p.data
                     .clone()
                     .iter_mut()
-                    .map(|data| (f32::from(*data) * self.volume) as i16)
+                    .map(|data| (f32::from(*data) * f32::from(self.volume) / f32::from(255u8)) as i16)
                     .collect::<Vec<i16>>()
             })
             .flatten()

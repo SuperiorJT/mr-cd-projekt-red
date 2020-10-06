@@ -4,7 +4,7 @@ use serenity::prelude::*;
 
 #[command]
 #[description = "Pings the bot"]
-pub fn ping(ctx: &Context, msg: &Message) -> CommandResult {
+pub async fn ping(ctx: &Context, msg: &Message) -> CommandResult {
     let _ = msg.reply(ctx, "Pong!");
 
     Ok(())

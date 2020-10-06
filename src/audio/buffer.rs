@@ -56,7 +56,7 @@ impl DiscordAudioBuffer {
         }
         let track = self.data.entry(data.ssrc).or_insert_with(|| {
             if largest_track_size == 0 {
-                return Track::new(1.0);
+                return Track::new(u8::max_value());
             }
             let mut buffer = vec![];
             let len = largest_track_size as u16 - 1;
@@ -68,12 +68,12 @@ impl DiscordAudioBuffer {
                 buffer.push(DiscordAudioPacket::new(
                     data.ssrc,
                     sequence,
-                    data.timestamp - (u64::from(len - x) * 20),
+                    data.timestamp - (u32::from(len - x) * 20),
                     data.stereo,
-                    vec![0; PACKET_SIZE],
+                    vec![0; usize::from(PACKET_SIZE)],
                 ));
             }
-            return Track::new_with_items(1.0, buffer);
+            return Track::new_with_items(u8::max_value(), buffer);
         });
 
         track.insert_packet(data);
@@ -105,7 +105,7 @@ impl DiscordAudioBuffer {
         // }
     }
 
-    pub fn update_track_mix(&mut self, ssrc: u32, volume: f32) -> Result<(), &'static str> {
+    pub fn update_track_mix(&mut self, ssrc: u32, volume: u8) -> Result<(), &'static str> {
         if !self.data.contains_key(&ssrc) {
             return Err("No track for ssrc");
         }
@@ -172,7 +172,13 @@ mod tests {
         buffer.data.values().for_each(|t| assert_eq!(t.len(), 5));
     }
 
-    fn new_empty_packet(ssrc: u32, sequence: u16, timestamp: u64) -> DiscordAudioPacket {
-        DiscordAudioPacket::new(ssrc, sequence, timestamp, true, vec![0; PACKET_SIZE])
+    fn new_empty_packet(ssrc: u32, sequence: u16, timestamp: u32) -> DiscordAudioPacket {
+        DiscordAudioPacket::new(
+            ssrc,
+            sequence,
+            timestamp,
+            true,
+            vec![0; usize::from(PACKET_SIZE)],
+        )
     }
 }

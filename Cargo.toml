@@ -15,13 +15,20 @@ hound = "3.4.0"
 r2d2 = "0.8.8"
 r2d2_sqlite = "0.16.0"
 
+[dependencies.tokio]
+version = "0.2"
+features = ["macros"]
+
+# [dependencies.audiopus_sys]
+# git = "https://github.com/Lakelezz/audiopus_sys.git"
+# branch = "add-cross-compile-support"
+
 [dependencies.rusqlite]
 version = "0.23.1"
 features = ["bundled"]
 
 [dependencies.serenity]
-git = "https://github.com/serenity-rs/serenity.git"
-branch = "next"
+version = "0.9.0-rc.2"
 features = [
     "builder",
     "cache",
@@ -33,4 +40,5 @@ features = [
     "standard_framework",
     "utils",
     "voice",
+    "rustls_backend"
 ]
