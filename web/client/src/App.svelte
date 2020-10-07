@@ -1,5 +1,11 @@
 <script lang="ts">
-	let name = 'world';
+	import "bulma/css/bulma.css";
+	import Router from "svelte-spa-router";
+	import Navbar from "./layout/Navbar.svelte";
+
+	import routes from "./routing";
 </script>
 
-<h1>Hello {name}!</h1>
+<Navbar />
+
+<Router {routes} />
