@@ -33,7 +33,7 @@ impl Redis {
         Ok(())
     }
 
-    pub async fn channel_create(&self, channel: &GuildChannel) -> redis::RedisResult<()> {
+    pub async fn channel_set(&self, channel: &GuildChannel) -> redis::RedisResult<()> {
         let guild_key = format!("guild:{}", channel.guild_id);
         let mut con = self.get_connection().await?;
 
