@@ -1,5 +1,5 @@
 
-use crate::db::Database;
+use crate::db::sqlite::Database;
 use crate::{Result};
 use rusqlite::{NO_PARAMS};
 use serenity::model::prelude::UserId;

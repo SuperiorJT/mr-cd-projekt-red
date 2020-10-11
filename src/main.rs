@@ -4,6 +4,7 @@ extern crate log;
 // pub mod audio;
 pub mod commands;
 pub mod db;
+pub mod handler;
 pub mod error;
 pub mod model;
 
@@ -12,21 +13,20 @@ pub use error::Error;
 pub type Result<T> = std::result::Result<T, error::Error>;
 
 // use audio::DiscordAudioBuffer;
-use db::Database;
+use db::sqlite::Database;
+use db::redis::Redis;
+
+use handler::Handler;
 
 use std::{collections::HashSet, env, sync::Arc, sync::RwLock};
 
 use serenity::{
-    async_trait,
     http::Http,
     client::{
         Client,
-        Context,
-        EventHandler,
         bridge::{gateway::ShardManager, voice::ClientVoiceManager}
     },
     framework::{standard::macros::group, StandardFramework},
-    model::gateway::Ready,
     prelude::*,
 };
 
@@ -58,19 +58,16 @@ impl TypeMapKey for DBType {
     type Value = Arc<RwLock<Database>>;
 }
 
+pub struct RedisManager;
+
+impl TypeMapKey for RedisManager {
+    type Value = Arc<Mutex<Redis>>;
+}
+
 struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<Mutex<ShardManager>>;
-}
-
-struct Handler;
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn ready(&self, _: Context, ready: Ready) {
-        println!("{} is connected!", ready.user.name);
-    }
 }
 
 pub static DISCORD_SAMPLE_RATE: usize = 48000;
@@ -116,6 +113,11 @@ async fn main() {
         Database::open().expect("Couldn't open database"),
     ));
 
+    let redis = Arc::new(tokio::sync::Mutex::new(
+       Redis::open().expect("Couldn't open redis")
+    ));
+    // redis.lock().await.test().await.expect("redis test failed!");
+
     let framework = 
         StandardFramework::new()
             .configure(|c| c.owners(owners).prefix("~"))
@@ -137,7 +139,8 @@ async fn main() {
     // event handlers and framework commands.
     {
         let mut data = client.data.write().await;
-        data.insert::<DBType>(Arc::clone(&db));
+        data.insert::<DBType>(db.clone());
+        data.insert::<RedisManager>(redis.clone());
         data.insert::<VoiceManager>(client.voice_manager.clone());
         // data.insert::<BufferType>(Arc::clone(&buffer_map));
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
