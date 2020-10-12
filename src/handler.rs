@@ -93,10 +93,20 @@ impl EventHandler for Handler {
 
     async fn guild_emojis_update(
         &self,
-        _ctx: Context,
-        _guild_id: GuildId,
-        _current_state: HashMap<EmojiId, Emoji>,
+        ctx: Context,
+        guild_id: GuildId,
+        current_state: HashMap<EmojiId, Emoji>,
     ) {
+        let data = ctx.data.read().await;
+        let redis_lock = data
+            .get::<RedisManager>()
+            .expect("Expected Redis in ShareMap")
+            .clone();
+
+        let r = redis_lock.lock().await;
+        r.emojis_update(guild_id, current_state)
+            .await
+            .expect("Failed to cache emojis");
     }
 
     async fn guild_integrations_update(&self, _ctx: Context, _guild_id: GuildId) {}
