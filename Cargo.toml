@@ -17,7 +17,7 @@ r2d2 = "0.8.8"
 r2d2_sqlite = "0.16.0"
 
 [dependencies.tokio]
-version = "0.2"
+version = "1.8"
 features = ["macros"]
 
 # [dependencies.audiopus_sys]
